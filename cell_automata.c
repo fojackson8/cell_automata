@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <math.h>
 
+// Does this change things? //
+
 // First build some arrays - for future versions, consider making separate functions to build grid based 
 // on command line inputs, and to introduce more complex secondary systems (e.g. iron chelation),
 // but for now just do all in main - MAKE MODULAR EVENTUALLY

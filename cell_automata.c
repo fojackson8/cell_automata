@@ -13,7 +13,10 @@
 // I is always grid length (up down), J is always grid width (left right)
 
 
-char* find_free_space(double** food_array, double** fullness_array,double food_eat_rate, int grid_length, int grid_width, int i, int j)
+//** TO DO: Move this function into main argument, as currently taking too many arguments
+//** Separately, if time, split into modules, but for now turn into main
+
+char* find_free_space(int** animal_array, double** food_array, double** fullness_array,double food_eat_rate, int grid_length, int grid_width, int i, int j, int breed_time)
 {
 
 	printf("Function find_free_space received the following params:\n");
@@ -39,6 +42,11 @@ char* find_free_space(double** food_array, double** fullness_array,double food_e
 		if (food_array[i][j-1] > no_food){
 		food_array[i][j-1] = food_array[i][j-1] - food_eat_rate;  
 		counter +=1;
+		}
+
+		if (animal_array[i][j-1] > 0 && animal_array[i][j] == 0 && breed_time == 1)
+		{
+			animal_array[i][j] = 1;
 		}
 	}
 	else 
@@ -262,7 +270,7 @@ int main(void)
 
 	int t = 0; // time variable to track game progress
 	int k; // just a loop variable to print
-
+	int breed_time = 0;
 	// Begin time simulation 
 	while (t< 1)
 	{  
@@ -273,7 +281,7 @@ int main(void)
 				if (animal_array[i][j] == 1)
 				{
 					// Find space around each position
-					directions = find_free_space(food_array,fullness_array,food_eat_rate,grid_length,grid_width,i,j);
+					directions = find_free_space(animal_array,food_array,fullness_array,food_eat_rate,grid_length,grid_width,i,j,breed_time);
 					printf("\nDirections position %d %d can move are:\n",i,j);
 					
 					for (k=0;k<4;k++)
@@ -282,16 +290,21 @@ int main(void)
 					}
 					printf("\n ----------------------------------------------------\n");
 
+
+					// Add in hunger
+					fullness_array[i][j] = fullness_array[i][j] - 0.2;
+
 					// Kill off any starved animals
 					if (fullness_array[i][j] < 0.5)
 					{
 						animal_array[i][j] = 0;
 					}
+
 				}
 			}
 
 		}
-
+		breed_time = t % 2;
 		// Grow food each turn
 		printf("Food array updated as follows:\n");
 		for (i=0;i<grid_length;i++)

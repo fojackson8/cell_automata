@@ -38,28 +38,37 @@ char* find_free_space(int** offspring_array, int** animal_array, double** food_a
 	//char* directions = (char*)malloc(4*sizeof(char));
 	char* placeholder = "ABC";
 
-	// Refresh food levels vector with zeros each time function is called
-	double food_levels[4];
+	// The food_levels vector tracks the amount of food at each position (LRUD) relative
+	// to the animal. Once the vector is filled, the adjacent position with the most 
+	// food is selected for breeding. food_levels is refreshed at each function call
+
+	double food_levels[4]; // These are set to 0.0. If there is no adjacent space for an animal to breed, then food levels will stay at 0.0
+	int adjacent_space[] = {0,0,0,0};  
+	int any_adjacent_space = 0;// If = 0, no space, so don't breed. If = 1, go ahead.
 	int p;
 	for (p=0;p<4;p++)
 	{
-		food_levels[p] = 0.0;
+		food_levels[p] = 0.0; // refresh to zero at each function call
 	}
+
+	//printf("\n\n **** LOGIC CHECKPOINT PASSED****\n");
+
 
 	counter = 0; // Reinitialise counter each time
 	bred = 0; // same for bred
 	if  (j-1 >= 0)
 	{
-		//directions[0] = 'L';
-
+		//Feeding
 		if (food_array[i][j-1] > no_food){
 		food_array[i][j-1] = food_array[i][j-1] - food_eat_rate;  
 		counter +=1;
 		}
-
-		if (animal_array[i][j-1] == 0 && breed_time == 1)
+		// Breeding
+		if (animal_array[i][j-1] == 0 && breed_time == 1) // Food levels stay at 0.0 if no adjacent space
 		{
-			food_levels[0] = food_array[i][j-1];
+			food_levels[0] = food_array[i][j-1]; 
+			adjacent_space[0] = 1; 
+			any_adjacent_space = 1;// 1 means there is adjacent space in AT LEAST 1 DIRECTION
 		}
 	}
 	else 
@@ -70,17 +79,18 @@ char* find_free_space(int** offspring_array, int** animal_array, double** food_a
 
 	if  (j+1 < grid_width)
 	{
-		//directions[1] = 'R';
-		
+		//Feeding
 		if (food_array[i][j+1] > no_food)
 		{
 		food_array[i][j+1] = food_array[i][j+1] - food_eat_rate;
 		counter +=1;
 		}
-
+		// Breeding
 		if (animal_array[i][j+1] == 0 && breed_time == 1)
 		{
 			food_levels[1] = food_array[i][j+1];
+			adjacent_space[1] = 1;
+			any_adjacent_space = 1;
 		}
 	}
 	else 
@@ -100,7 +110,9 @@ char* find_free_space(int** offspring_array, int** animal_array, double** food_a
 		// Breeding
 		if (animal_array[i-1][j] == 0 && breed_time == 1)
 		{
-			food_levels[2] = food_array[i-1][j];		
+			food_levels[2] = food_array[i-1][j];
+			adjacent_space[2] = 1;		
+			any_adjacent_space = 1;
 		}
 	}
 	else 
@@ -120,6 +132,8 @@ char* find_free_space(int** offspring_array, int** animal_array, double** food_a
 		if (animal_array[i+1][j] == 0 && breed_time == 1)
 		{
 			food_levels[3] = food_array[i+1][j];
+			adjacent_space[3] = 1;
+			any_adjacent_space = 1;
 		}
 	}
 	else 
@@ -128,37 +142,75 @@ char* find_free_space(int** offspring_array, int** animal_array, double** food_a
 	}
 
 
+
+
 	// Find best direction to breed (where there's most food)
-	double maximum = food_levels[0];
+	
 	int location;
-	for (p=0;p<4;p++)
+	char positions[] = {'L','R','U','D'};
+	char direction;
+	double maximum; 
+
+	// ** ACTION ** at some point need to deal with equal food values (add in randomness)
+
+	if (breed_time == 1 && any_adjacent_space == 1) // Don't go through if no adjacent space anywhere
 	{
-		if (food_levels[p] > maximum)
+		maximum= food_levels[0];
+		for (p=0;p<4;p++)
 		{
-			maximum = food_levels[p];
-			location = p;
+			if (food_levels[p] > maximum)
+			{
+				maximum = food_levels[p];
+				if (maximum > 0.0)
+				{location = p;} // Set location to an integer, corresponding to a direction to breed
+			}
+		}
+		direction = positions[location];
+		//printf("Maximum food for animal %d %d = %f in direction %c\n",i,j,maximum,direction);
+		//printf("\n Location value = %d\n", location);
+
+		// Couldn't get switch case to work as wanted, so using if for now - TEMP**
+		// switch (location)
+		// {
+		// 	case 0:
+		// 		offspring_array[i][j-1] = 1;
+		// 		printf("\nAnimal %d %d bred 1 new animal at position %d %d \n", i,j,i,j-1); 
+		// 	case 1:
+		// 		offspring_array[i][j+1] = 1;
+		// 		printf("\nAnimal %d %d bred 1 new animal at position %d %d \n", i,j,i,j+1); 
+
+		// 	case 2:
+		// 		offspring_array[i-1][j] = 1;
+		// 		printf("\nAnimal %d %d bred 1 new animal at position %d %d \n", i,j,i-1,j); 
+
+		// 	case 3:
+		// 		offspring_array[i+1][j] = 1;
+		// 		printf("\nAnimal %d %d bred 1 new animal at position %d %d \n", i,j,i+1,j); 
+
+		// }	
+
+
+		if (location ==0 && adjacent_space[0] == 1) // if location ==0, there is most feed directly up, so breed up.
+		{
+			offspring_array[i][j-1] = 1;
+			printf("\nAnimal %d %d bred 1 new animal at position %d %d \n\n", i,j,i,(j-1)); 
+		}
+		else if (location ==1 && adjacent_space[1] == 1)
+		{
+			offspring_array[i][j+1] = 1;
+			printf("\nAnimal %d %d bred 1 new animal at position %d %d \n\n", i,j,i,(j+1)); 
+		}
+		else if (location ==2 && adjacent_space[2] == 1)
+		{
+			offspring_array[i-1][j] = 1;
+			printf("\nAnimal %d %d bred 1 new animal at position %d %d \n\n", i,j,(i-1),j); 
+		}
+		else if (location ==3 && adjacent_space[3] == 1)
+		{
+			offspring_array[i+1][j] = 1;
+			printf("\nAnimal %d %d bred 1 new animal at position %d %d \n\n", i,j,(i+1),j); 
 		}
 	}
-	printf("Maximum food = %f at position %d\n",maximum,location);
-
-	switch (location)
-	{
-		case 0:
-			offspring_array[i][j-1] = 1;
-			printf("\n Animal %d %d bred 1 new animal at position %d %d \n", i,j,i,j-1); 
-		case 1:
-			offspring_array[i][j+1] = 1;
-			printf("\n Animal %d %d bred 1 new animal at position %d %d \n", i,j,i,j+1); 
-
-		case 2:
-			offspring_array[i-1][j] = 1;
-			printf("\n Animal %d %d bred 1 new animal at position %d %d \n", i,j,i-1,j); 
-
-		case 3:
-			offspring_array[i+1][j] = 1;
-			printf("\n Animal %d %d bred 1 new animal at position %d %d \n", i,j,i+1,j); 
-
-	}	
 
 	// Update fullness array, according to how much has been eaten
 	fullness_array[i][j] += 0.1*counter;
@@ -383,6 +435,7 @@ int main(void)
 			{
 				if (animal_array[i][j] == 1)
 				{
+					printf("%d,%d ", i,j);
 					// Find space around each position
 					directions  = find_free_space(offspring_array,animal_array,food_array,fullness_array,food_eat_rate,grid_length,grid_width,i,j,breed_time);
 					//printf("\nDirections position %d %d can move are:\n",i,j);
@@ -393,19 +446,10 @@ int main(void)
 					// }
 					//printf("\n ----------------------------------------------------\n");
 
-
-					// Add in hunger
-					fullness_array[i][j] = fullness_array[i][j] - 0.2;
-
-					// Kill off any starved animals
-					if (fullness_array[i][j] < 0.5)
-					{
-						animal_array[i][j] = 0;
-					}
-
 				}
-			}
 
+			}
+			printf("\n");
 		}
 		
 
@@ -414,22 +458,49 @@ int main(void)
 
 
 
-		// Add in new animals to animal array, reset offspring array, and grow food
-		printf("\nOffspring array for t = %d: \n",t);
+		// Add in new animals to animal array, reset offspring array, grow food,
+		// Subtract hunger from fullness_array, and kill off hungry animals
+		printf("\nOffspring array at end of t = %d: \n",t);
 		for (i=0;i<grid_length;i++)
 		{
 			for (j=0;j<grid_width;j++)
 			{
 				printf("%d ",offspring_array[i][j]);
-				animal_array[i][j] = animal_array[i][j] + offspring_array[i][j];
-				offspring_array[i][j]= 0;
-				food_array[i][j] += food_growth_rate;
+				animal_array[i][j] = animal_array[i][j] + offspring_array[i][j]; // Update animal array with new offspring
+				food_array[i][j] += food_growth_rate; // Let more food grow
 			}
 			printf("\n");
 		}
 
+		// refresh offspring array
+		for (i=0;i<grid_length;i++)
+		{
+			for (j=0;j<grid_width;j++)
+			{
+				offspring_array[i][j]= 0; // Refresh offspring array to 0
+			}
+			printf("\n");
+		}
+
+
+		// Fullness array
+		for (i=0;i<grid_length;i++)
+		{
+			for (j=0;j<grid_width;j++)
+			{
+				// Add in hunger
+				fullness_array[i][j] = fullness_array[i][j] - 0.2; // Subtract some food from each animal
+
+				// Kill off any starved animals
+				if (fullness_array[i][j] < 0.5)
+				{
+					animal_array[i][j] = 0;
+				}
+			}	
+		}
+
 		// Now print animal array
-		printf("\nAnimal array for t = %d:\n",t);
+		printf("\nAnimal array at end of t = %d:\n",t);
 		for (i=0;i<grid_length;i++)
 		{
 			for (j=0;j<grid_width;j++)
@@ -439,17 +510,28 @@ int main(void)
 			printf("\n");
 		}
 		
-
-		// Now print Food array
-		printf("\nFood array for t = %d:\n",t);
+		// Now print animal array
+		printf("\n Fullness array at end of t = %d:\n",t);
 		for (i=0;i<grid_length;i++)
 		{
 			for (j=0;j<grid_width;j++)
 			{
-				printf("%f ", food_array[i][j]);
+				printf("%f ", fullness_array[i][j]);
 			}
 			printf("\n");
 		}
+
+		// Now print Food array
+		// printf("\nFood array at end of t = %d:\n",t);
+		// for (i=0;i<grid_length;i++)
+		// {
+		// 	for (j=0;j<grid_width;j++)
+		// 	{
+		// 		printf("%f ", food_array[i][j]);
+		// 	}
+		// 	printf("\n");
+		// }
+
 		printf("\n ---------------------------------------------- \n");
 
 

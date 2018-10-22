@@ -410,6 +410,7 @@ int main(void)
 	// Set constants
 	double food_growth_rate = 0.2;
 	double food_eat_rate = 0.1;
+	double hunger_constant = 0.2;
 
 	// For each agent, need to determine n_Free_cells surrounding it. Then divide the
 	// total eat rate it requires by n_Free_cells
@@ -438,6 +439,15 @@ int main(void)
 					printf("%d,%d ", i,j);
 					// Find space around each position
 					directions  = find_free_space(offspring_array,animal_array,food_array,fullness_array,food_eat_rate,grid_length,grid_width,i,j,breed_time);
+					
+					// Add in hunger
+					fullness_array[i][j] = fullness_array[i][j] - hunger_constant; // Subtract some food from each animal
+					// Kill off any starved animals
+					if (fullness_array[i][j] < 0.5)
+					{
+						animal_array[i][j] = 0;
+					}
+
 					//printf("\nDirections position %d %d can move are:\n",i,j);
 					
 					// for (k=0;k<4;k++)
@@ -483,21 +493,6 @@ int main(void)
 		}
 
 
-		// Fullness array
-		for (i=0;i<grid_length;i++)
-		{
-			for (j=0;j<grid_width;j++)
-			{
-				// Add in hunger
-				fullness_array[i][j] = fullness_array[i][j] - 0.2; // Subtract some food from each animal
-
-				// Kill off any starved animals
-				if (fullness_array[i][j] < 0.5)
-				{
-					animal_array[i][j] = 0;
-				}
-			}	
-		}
 
 		// Now print animal array
 		printf("\nAnimal array at end of t = %d:\n",t);
@@ -510,7 +505,7 @@ int main(void)
 			printf("\n");
 		}
 		
-		// Now print animal array
+		// Now print fullness array
 		printf("\n Fullness array at end of t = %d:\n",t);
 		for (i=0;i<grid_length;i++)
 		{
